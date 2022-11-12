@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -27,6 +27,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 30,
   },
+  buttonStop: {
+    borderColor: "#ffa889",
+  },
+  buttonStopText: {
+    color: "#ffa889",
+  },
   buttonText: {
     fontSize: 45,
     color: "#89AAFF",
@@ -42,18 +48,46 @@ function padTime(time: number) {
 }
 
 export default function App() {
-  const [timer, setTimer] = useState(90);
+  const [timer, setTimer] = useState(10);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
 
-  // const minutes = padTime(Math.floor(timer / 60));
-  // const seconds = padTime(timer - minutes * 60);
+  const minutes = padTime(Math.floor(timer / 60));
+  const seconds = padTime(timer - Number(minutes) * 60);
+
+  const startTimer = () => {
+    if (intervalRef.current !== null) return;
+    setIsRunning(true);
+    intervalRef.current = setInterval(() => {
+      setTimer((prevTimer: number) => prevTimer - 1);
+    }, 1000);
+  };
+
+  const stopTimer = () => {
+    if (intervalRef.current === null) return;
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+    setIsRunning(false);
+  };
 
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <Text style={styles.timerText}>{timer}</Text>
-      <TouchableOpacity onPress={() => null} style={styles.button}>
-        <Text style={styles.buttonText}>Start</Text>
-      </TouchableOpacity>
+      <Text style={styles.timerText}>
+        {minutes} : {seconds}
+      </Text>
+      {isRunning ? (
+        <TouchableOpacity
+          onPress={stopTimer}
+          style={[styles.button, styles.buttonStop]}
+        >
+          <Text style={[styles.buttonText, styles.buttonStopText]}>Stop</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity onPress={startTimer} style={styles.button}>
+          <Text style={styles.buttonText}>Start</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
